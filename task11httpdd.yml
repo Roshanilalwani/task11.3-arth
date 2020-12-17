@@ -1,0 +1,49 @@
+- hosts: all
+  vars_files:
+       - var.yml
+
+  tasks:
+  - name: "Instaling httpd appache"
+    package:
+       name: "httpd"
+       state: present
+
+  - name: "creating the document root folder"
+    file:
+       state: directory
+       path: "{{ documentroot }}"
+
+  - name: "add new conf file in /etc/httpd/conf.d"
+    template:
+        dest: "/etc/httpd/conf.d/task11.conf"
+        src: "/httpd/task11.conf"
+  - notify:
+       - runninng httpd services
+
+  - name: "copying the content of website"
+    copy:
+       dest: "{{ documentroot }}/task11-3.html"
+       content: "task11.3 succesfully completed!! \n"
+
+  - name:  "Adding rule for http"
+    firewalld:
+       port: "{{ http_port }}/tcp"
+       state: enabled
+       permanent: yes
+       immediate: yes
+
+  - name: Disable SELinux
+    ansible.posix.selinux:
+        state: disabled
+
+  - name: " start httpd "
+    service:
+       name: "httpd"
+       state: started
+
+  handlers:
+    - name: "running httpd service"
+      service:
+        name: "httpd"
+        state: restarted
+
